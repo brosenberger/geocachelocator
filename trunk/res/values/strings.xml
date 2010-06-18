@@ -2,7 +2,7 @@
 <resources>
     <string name="close">Quit</string>
     <string name="hello">Hello World, Test!</string>
-    <string name="app_name">TestAndroid</string>
+    <string name="app_name">GeoCacheLocator</string>
 <string name="hello2">hallo2 is speaking</string>
 <string name="Button01">go to:</string>
 <string-array name="SN">
