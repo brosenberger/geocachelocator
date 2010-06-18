@@ -7,12 +7,20 @@
   android:stretchColumns="*">
   
      <TableRow>
-   		<ImageView 
-   			android:layout_width="fill_parent" 
-   			android:layout_height="wrap_content" 
-   			android:layout_gravity="center_horizontal"
-   			android:id="@+id/ImageArrow" 
-   			android:src="@drawable/arrow"></ImageView>
+	   	<RelativeLayout 
+	   		android:id="@+id/RelativeLayout01" 
+	   		android:layout_width="wrap_content" 
+	   		android:layout_height="wrap_content"
+	   		android:layout_centerInParent="true">
+   			<ImageView 
+   				android:layout_width="fill_parent" 
+   				android:layout_height="wrap_content" 
+	   			android:layout_gravity="center_horizontal"
+   				android:id="@+id/ImageArrow" 
+   				android:src="@drawable/arrow" android:layout_centerInParent="true"></ImageView>
+		<ImageView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/image_arrow_red" android:src="@drawable/arrow_red" android:layout_centerInParent="true"></ImageView><ImageView android:layout_width="wrap_content" android:layout_height="wrap_content" android:id="@+id/image_arrow_yellow" android:src="@drawable/arrow_yellow" android:layout_centerInParent="true"></ImageView>
+
+</RelativeLayout>
 	</TableRow>
 	<TableRow>
 		<TextView 

@@ -10,6 +10,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
+import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.widget.*;
 
@@ -21,7 +22,10 @@ public class Test extends Activity {
 	private LocationManager lm;
 	private SensorManager sm;
 	private Location destination,myLocation;
+	private Distance distance;
 	private int actDegree=0;
+	private static float RED_BORDER=1000;
+	private static float YELLOW_BORDER=300;
 	protected ArrayAdapter<CharSequence> mAdapter;
 
     /** Called when the activity is first created. */
@@ -55,6 +59,11 @@ public class Test extends Activity {
 
         final Button button = (Button) findViewById(R.id.Button01);
         button.setOnClickListener(new ButtonListener());
+        
+        Animation a = generateTransparencyAnimation(0, 100, 0);
+        ((ImageView) findViewById(R.id.ImageArrow)).startAnimation(a);
+        ((ImageView) findViewById(R.id.image_arrow_yellow)).startAnimation(a);
+        ((ImageView) findViewById(R.id.image_arrow_red)).startAnimation(a);
     }
     
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -78,8 +87,36 @@ public class Test extends Activity {
     
     private void updateDistance() {
     	Location actPos = myLocation==null?destination:myLocation;
+    	float oldD = distance==null?0:distance.getDistance();
     	TextView tv = (TextView) findViewById(R.id.distance);
     	tv.setText(getDistance(actPos)+" ("+(char)177+actPos.getAccuracy()+")");
+    	updateArrowColor(oldD, distance.getDistance());
+    }
+    private void updateArrowColor(float oldD, float newD) {
+    	Animation fadeOut = generateTransparencyAnimation(100, 100, 0);
+    	Animation fadeIn = generateTransparencyAnimation(100, 0, 100);
+    	ImageView out, in;
+    	if (oldD>RED_BORDER && newD>YELLOW_BORDER) { //-->red to yellow
+    		in = (ImageView) findViewById(R.id.image_arrow_yellow);
+    		out = (ImageView) findViewById(R.id.image_arrow_red);
+    	} else if (oldD>YELLOW_BORDER && oldD<=RED_BORDER && newD<=YELLOW_BORDER) { //-->yellow to green
+    		in = (ImageView) findViewById(R.id.ImageArrow);
+    		out = (ImageView) findViewById(R.id.image_arrow_yellow);
+    	} else if (oldD<=YELLOW_BORDER && newD>YELLOW_BORDER && newD<=RED_BORDER) { //-->green to yellow
+    		in = (ImageView) findViewById(R.id.image_arrow_yellow);
+    		out = (ImageView) findViewById(R.id.ImageArrow);
+    	} else if (oldD>RED_BORDER && newD<=YELLOW_BORDER) { //-->red to green
+    		in = (ImageView) findViewById(R.id.ImageArrow);
+    		out = (ImageView) findViewById(R.id.image_arrow_red);
+    	} else if (oldD<=YELLOW_BORDER && newD>RED_BORDER) { //-->green to red
+    		in = (ImageView) findViewById(R.id.image_arrow_red);
+    		out = (ImageView) findViewById(R.id.ImageArrow);
+    	} else { //-->yellow to red
+    		in = (ImageView) findViewById(R.id.image_arrow_red);
+    		out = (ImageView) findViewById(R.id.image_arrow_yellow);
+    	}
+    	in.startAnimation(fadeIn);
+    	out.startAnimation(fadeOut);
     }
     private void updateActPos() {
 		TextView tv = (TextView) findViewById(R.id.latitude);
@@ -90,7 +127,7 @@ public class Test extends Activity {
 		tl.requestLayout();
     }
     private String getDistance(Location actPos) {
-    	return new Distance(actPos.distanceTo(destination)).toString();
+    	return (distance=new Distance(actPos.distanceTo(destination))).toString();
     }
     private float[] getRotationTo(int actDegree, Location destination) {
     	float to = myLocation.bearingTo(destination);
@@ -103,18 +140,29 @@ public class Test extends Activity {
     	float[] ret = {to,toRotate};
     	return ret;
     }
-    private Animation generateRotationAnimation(int from, int to, float xOff, float yOff) {
+    private Animation generateRotationAnimation(long duration, int from, int to, float xOff, float yOff) {
     	Rotate3dAnimation r = new Rotate3dAnimation(from, to, xOff, yOff, 0, false);
     	r.setFillAfter(true);
-    	r.setDuration(1000);
+    	r.setDuration(duration);
     	return r;
     }
+    private Animation generateTransparencyAnimation(long duration, float from, float to) {
+    	AlphaAnimation a = new AlphaAnimation(from, to);
+    	a.setFillAfter(true);
+    	a.setDuration(duration);
+    	return a;
+    }
     private void rotateImage() {
-		ImageView img = (ImageView) findViewById(R.id.ImageArrow);
 		float to[] = getRotationTo(actDegree,destination);
 	//	Log.e(TAG, "rotating from: "+actDegree+"\tto:"+to[0]);
-		img.startAnimation(generateRotationAnimation(actDegree, (int) to[1], img.getWidth()/2.0f, img.getHeight()/2.0f));
+		startRotationAnimationForImage((ImageView) findViewById(R.id.ImageArrow), to[1]);
+		startRotationAnimationForImage((ImageView) findViewById(R.id.image_arrow_yellow), to[1]);
+		startRotationAnimationForImage((ImageView) findViewById(R.id.image_arrow_red), to[1]);
 		actDegree=(int) to[0];
+    }
+    private void startRotationAnimationForImage(ImageView img,float to) {
+		Animation a = generateRotationAnimation(1000,actDegree, (int) to, img.getWidth()/2.0f, img.getHeight()/2.0f);
+		img.startAnimation(a); 
     }
     private void setDestination(Location destination) {
     	this.destination = new Location(destination);
