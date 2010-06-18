@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="wrap_content"
+  android:layout_height="fill_parent"
+  android:stretchColumns="4">
+  
+  <TableRow>
+  	<TextView android:layout_width="fill_parent"
+  		android:layout_span="5"
+  		android:layout_height="fill_parent"></TextView>
+  </TableRow>
+  <TableRow>
+  	<TextView android:text="   "
+  		android:layout_width="wrap_content"
+  		android:layout_height="fill_parent"></TextView>
+  	<include android:id="@+id/table_arrow" 
+  		layout="@layout/table_arrow"
+  		android:layout_width="fill_parent"
+  		android:layout_height="fill_parent"></include>
+  	<TextView android:text="   "
+  		android:layout_width="wrap_content"
+  		android:layout_height="fill_parent"></TextView>
+  	<TextView 
+  		android:layout_height="fill_parent" 
+  		android:layout_width="2dip"
+  		android:background="#FF909090" ></TextView>
+  	<include android:id="@+id/input_point" 
+  		layout="@layout/table_inputs"
+  		android:layout_width="fill_parent"
+  		android:layout_height="fill_parent"></include>
+  </TableRow>
+</TableLayout>

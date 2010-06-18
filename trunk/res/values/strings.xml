@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, Test!</string>
+    <string name="app_name">TestAndroid</string>
+<string name="hello2">hallo2 is speaking</string>
+<string name="Button01">go to:</string>
+<string-array name="SN">
+	<item>N</item>
+	<item>S</item>
+</string-array>
+<string-array name="EW">
+	<item>E</item>
+	<item>W</item>
+</string-array>
+</resources>
