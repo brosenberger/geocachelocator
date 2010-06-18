@@ -11,6 +11,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
+import android.view.animation.Animation;
+import android.view.animation.RotateAnimation;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -79,28 +81,55 @@ public class Test extends Activity {
     private String getDistance(Location actPos) {
     	return new Distance(actPos.distanceTo(destination)).toString();
     }
-    
+    private float[] getRotationTo(int actDegree, Location destination) {
+    	float to = myLocation.bearingTo(destination);
+    	float toRotate;
+    	if (to>0) to -= 360;
+    	toRotate = to *= -1;
+    	if (Math.abs(actDegree-to)>180) {
+    		toRotate-=360;
+    	}
+    	float[] ret = {to,toRotate};
+    	return ret;
+    }
+    private Animation generateRotationAnimation(int from, int to, float xOff, float yOff) {
+    	Rotate3dAnimation r = new Rotate3dAnimation(from, to, xOff, yOff, 0, false);
+    	r.setFillAfter(true);
+    	r.setDuration(1000);
+    	return r;
+    }
     private void rotateImage() {
 		ImageView img = (ImageView) findViewById(R.id.ImageArrow);
-		float to = myLocation.bearingTo(destination);
-		Log.e(TAG, "direction to="+to);
-		Rotate3dAnimation r = new Rotate3dAnimation(actDegree,(int) to,img.getWidth()/2.0f,img.getHeight()/2.0f,0,false);
-		r.setDuration(1000);
-		r.setFillAfter(true);
-		img.startAnimation(r);
-		
-		actDegree=(int) to;
+		float to[] = getRotationTo(actDegree,destination);
+		Log.e(TAG, "rotating from: "+actDegree+"\tto:"+to);
+		img.startAnimation(generateRotationAnimation(actDegree, (int) to[1], img.getWidth()/2.0f, img.getHeight()/2.0f));
+		actDegree=(int) to[0];
     }
-    
     private void setDestination(Location destination) {
     	this.destination = new Location(destination);
-   		Log.i(TAG, "destination changed to: "+destination.toString());
+   	//	Log.i(TAG, "destination changed to: "+destination.toString());
     }
     private void setMyLocation(Location myLocation) {
     	this.myLocation = myLocation;
     	if (myLocation!=null){ 
-    		Log.i(TAG, "my location changed to: "+myLocation.toString());
+    //		Log.i(TAG, "my location changed to: "+myLocation.toString());
     	}
+    }
+    private void getNewDestination() {
+		Location dest = new Location("gps");
+		float longitude, latitude;
+		try {
+			longitude = Float.parseFloat(((EditText) findViewById(R.id.inLongitude)).getText().toString());
+			latitude = Float.parseFloat(((EditText) findViewById(R.id.inLatitude)).getText().toString());
+			Spinner spinnerSN = (Spinner) findViewById(R.id.SpinnerSN);
+			Spinner spinnerEW = (Spinner) findViewById(R.id.SpinnerEW);
+			if (spinnerSN.getSelectedItem().toString().equalsIgnoreCase("S")) latitude *= -1;
+			if (spinnerEW.getSelectedItem().toString().equalsIgnoreCase("W")) longitude *= -1;
+			dest.setLatitude(latitude);
+			dest.setLongitude(longitude);
+			setDestination(dest);
+			updateAll();
+		} catch (Exception e) {}
     }
     
     private void updateAll() {
@@ -110,23 +139,19 @@ public class Test extends Activity {
     }
         
     private class LocationUpdateHandler implements LocationListener {
-		@Override
 		public void onLocationChanged(Location location) {
 			if (destination==null) setDestination(location);
 			setMyLocation(location);
 			updateAll();
 		}
 
-		@Override public void onProviderDisabled(String provider) {}
-		@Override public void onProviderEnabled(String provider) {}
-		@Override public void onStatusChanged(String provider, int status, Bundle extras) {}
-    }
-    
-    @SuppressWarnings("deprecation")
-	private class SensorChangedListener implements SensorListener {
-		@Override public void onAccuracyChanged(int sensor, int accuracy) {}
+		public void onProviderDisabled(String provider) {}
+		public void onProviderEnabled(String provider) {}
+		public void onStatusChanged(String provider, int status, Bundle extras) {}
+    } 
+    private class SensorChangedListener implements SensorListener {
+		public void onAccuracyChanged(int sensor, int accuracy) {}
 
-		@Override
 		public void onSensorChanged(int sensor, float[] values) {
 			// TODO Auto-generated method stub
 			//										yaw					pitch				roll
@@ -134,23 +159,9 @@ public class Test extends Activity {
 		}
     	
     }
-    
     private class ButtonListener implements View.OnClickListener {
-		@Override
 		public void onClick(View v) {
-			Location dest = new Location("gps");
-			float longitude, latitude;
-			try {
-				longitude = Float.parseFloat(((EditText) findViewById(R.id.inLongitude)).getText().toString());
-				latitude = Float.parseFloat(((EditText) findViewById(R.id.inLatitude)).getText().toString());
-				Spinner spinnerSN = (Spinner) findViewById(R.id.SpinnerSN);
-				Spinner spinnerEW = (Spinner) findViewById(R.id.SpinnerEW);
-				if (spinnerSN.getSelectedItem().toString().equalsIgnoreCase("S")) latitude *= -1;
-				if (spinnerEW.getSelectedItem().toString().equalsIgnoreCase("W")) longitude *= -1;
-				dest.setLatitude(latitude);
-				dest.setLongitude(longitude);
-				setDestination(dest);
-				updateAll();
-			} catch (Exception e) {}
-		}    }
+			getNewDestination();
+		}    
+	}
 }
