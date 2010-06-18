@@ -2,14 +2,11 @@ package test.Test;
 
 import android.app.Activity;
 import android.content.Context;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.*;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -17,12 +14,10 @@ import android.widget.*;
 
 //distances: http://www.anddev.org/the_friend_finder_-_mapactivity_using_gps_-_part_i_-_ii-t93.html
 //compass and so on: http://developer.android.com/resources/samples/ApiDemos/src/com/example/android/apis/graphics/Compass.html
-@SuppressWarnings("deprecation")
 public class Test extends Activity {
 	private static final String TAG = "GeoCacheLocator";
 	private LocationManager lm;
-	private SensorManager sm;
-	private Location destination,myLocation;
+	private Location destination,myLocation,lastPosition;
 	private Distance distance;
 	private int actDegree=0;
 	private float correction=0;
@@ -39,11 +34,7 @@ public class Test extends Activity {
         lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationUpdateHandler());
         setMyLocation(lm.getLastKnownLocation("gps"));
-        
-        sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        //sm.registerListener(new SensorChangedListener(), SensorManager.SENSOR_ORIENTATION);
-        sm.registerListener(new SensorChangedListener(), sm.getDefaultSensor(SensorManager.SENSOR_ORIENTATION), SensorManager.SENSOR_DELAY_NORMAL);
-        
+                
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
         
@@ -92,7 +83,7 @@ public class Test extends Activity {
     	Location actPos = myLocation==null?destination:myLocation;
     	float oldD = distance==null?0:distance.getDistance();
     	TextView tv = (TextView) findViewById(R.id.distance);
-    	tv.setText(getDistance(actPos)+" ("+(char)177+actPos.getAccuracy()+")");
+    	tv.setText(getDistance(actPos)+" ("+(char)177+actPos.getAccuracy()+"m)");
     	updateArrowColor(oldD, distance.getDistance());
     }
     private void updateArrowColor(float oldD, float newD) {
@@ -132,8 +123,8 @@ public class Test extends Activity {
     private String getDistance(Location actPos) {
     	return (distance=new Distance(actPos.distanceTo(destination))).toString();
     }
-    private float[] getRotationTo(int actDegree, Location destination) {
-    	float to = myLocation.bearingTo(destination);
+    private float[] getRotationTo(int actDegree, Location source, Location destination) {
+    	float to = source.bearingTo(destination);
     	float toRotate;
     	if (to>0) to -= 360;
     	toRotate = to = (to*-1)+correction;
@@ -156,7 +147,7 @@ public class Test extends Activity {
     	return a;
     }
     private void rotateImage() {
-		float to[] = getRotationTo(actDegree,destination);
+		float to[] = getRotationTo(actDegree,myLocation,destination);
 	//	Log.e(TAG, "rotating from: "+actDegree+"\tto:"+to[0]);
 		startRotationAnimationForImage((ImageView) findViewById(R.id.ImageArrow), to[1]);
 		startRotationAnimationForImage((ImageView) findViewById(R.id.image_arrow_yellow), to[1]);
@@ -177,7 +168,24 @@ public class Test extends Activity {
     //		Log.i(TAG, "my location changed to: "+myLocation.toString());
     	}
     }
+    private void setLastPosition(Location lastPosition) {
+    	this.lastPosition = lastPosition;
+    	setDegreeCorrection(getRotationTo(actDegree, lastPosition, myLocation)[0]);
+    	TextView tv = (TextView) findViewById(R.id.orientation);
+    	tv.setText("Direction:" +this.correction+"° ("+getCompassDirection(this.correction)+")");
+    }
+    private String getCompassDirection(float val) {
+    	if (val>=22.5 && val<67.5) return "NO";
+    	if (val>=67.5 && val<112.5) return "O";
+    	if (val>=112.5 && val<157.5) return "SO";
+    	if (val>=157.5 && val<202.5) return "S";
+    	if (val>=202.5 && val<247.5) return "SW";
+    	if (val>=247.5 && val<292.5) return "W";
+    	if (val>=292.5 && val<337.5) return "NW";
+    	return "N";
+    }
     private void setDegreeCorrection(float correction) {
+    	Log.d(TAG, "direction: "+correction);
     	this.correction = correction;
     }
     private void getNewDestination() {
@@ -206,6 +214,7 @@ public class Test extends Activity {
     private class LocationUpdateHandler implements LocationListener {
 		public void onLocationChanged(Location location) {
 			if (destination==null) setDestination(location);
+			if (lastPosition==null) setLastPosition(location);
 			setMyLocation(location);
 			updateAll();
 		}
@@ -214,18 +223,6 @@ public class Test extends Activity {
 		public void onProviderEnabled(String provider) {}
 		public void onStatusChanged(String provider, int status, Bundle extras) {}
     } 
-    private class SensorChangedListener implements SensorEventListener {
-		//Log.d(TAG, "sensorChanged (" + values[0] + ", " + values[1] + ", " + values[2] + ")");
-
-		public void onAccuracyChanged(Sensor arg0, int arg1) {}
-
-		public void onSensorChanged(SensorEvent event) {
-			if (event.sensor.getType()==SensorManager.SENSOR_ORIENTATION) {
-				setDegreeCorrection(event.values[0]);
-			}
-		}
-    	
-    }
     private class ButtonListener implements View.OnClickListener {
 		public void onClick(View v) {
 			getNewDestination();

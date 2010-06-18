@@ -15,9 +15,9 @@ public class Distance {
 		float d=distance;
 		if (d/1000>0.8) {
 			d /= 1000;
-			return String.format("%.2f km", d);
+			return String.format("%.2fkm", d);
 		} else {
-			return String.format("%.1f m", d);
+			return String.format("%.1fm", d);
 		}
 		
 	}
