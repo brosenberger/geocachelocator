@@ -2,13 +2,14 @@ package test.Test;
 
 import android.app.Activity;
 import android.content.Context;
-import android.hardware.SensorListener;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.*;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
@@ -24,10 +25,11 @@ public class Test extends Activity {
 	private Location destination,myLocation;
 	private Distance distance;
 	private int actDegree=0;
+	private float correction=0;
 	private static float RED_BORDER=1000;
 	private static float YELLOW_BORDER=300;
 	protected ArrayAdapter<CharSequence> mAdapter;
-
+	
     /** Called when the activity is first created. */
     @SuppressWarnings("unchecked")
 	@Override
@@ -39,7 +41,8 @@ public class Test extends Activity {
         setMyLocation(lm.getLastKnownLocation("gps"));
         
         sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        sm.registerListener(new SensorChangedListener(), SensorManager.SENSOR_ORIENTATION);
+        //sm.registerListener(new SensorChangedListener(), SensorManager.SENSOR_ORIENTATION);
+        sm.registerListener(new SensorChangedListener(), sm.getDefaultSensor(SensorManager.SENSOR_ORIENTATION), SensorManager.SENSOR_DELAY_NORMAL);
         
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
@@ -133,7 +136,7 @@ public class Test extends Activity {
     	float to = myLocation.bearingTo(destination);
     	float toRotate;
     	if (to>0) to -= 360;
-    	toRotate = to *= -1;
+    	toRotate = to = (to*-1)+correction;
     	if (Math.abs(actDegree-to)>180) {
     		toRotate-=360;
     	}
@@ -174,6 +177,9 @@ public class Test extends Activity {
     //		Log.i(TAG, "my location changed to: "+myLocation.toString());
     	}
     }
+    private void setDegreeCorrection(float correction) {
+    	this.correction = correction;
+    }
     private void getNewDestination() {
 		Location dest = new Location("gps");
 		float longitude, latitude;
@@ -208,13 +214,15 @@ public class Test extends Activity {
 		public void onProviderEnabled(String provider) {}
 		public void onStatusChanged(String provider, int status, Bundle extras) {}
     } 
-    private class SensorChangedListener implements SensorListener {
-		public void onAccuracyChanged(int sensor, int accuracy) {}
+    private class SensorChangedListener implements SensorEventListener {
+		//Log.d(TAG, "sensorChanged (" + values[0] + ", " + values[1] + ", " + values[2] + ")");
 
-		public void onSensorChanged(int sensor, float[] values) {
-			// TODO Auto-generated method stub
-			//										yaw					pitch				roll
-			Log.d(TAG, "sensorChanged (" + values[0] + ", " + values[1] + ", " + values[2] + ")");
+		public void onAccuracyChanged(Sensor arg0, int arg1) {}
+
+		public void onSensorChanged(SensorEvent event) {
+			if (event.sensor.getType()==SensorManager.SENSOR_ORIENTATION) {
+				setDegreeCorrection(event.values[0]);
+			}
 		}
     	
     }
