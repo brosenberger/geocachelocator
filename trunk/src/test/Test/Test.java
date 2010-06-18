@@ -9,8 +9,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.view.Window;
+import android.view.*;
 import android.view.animation.Animation;
 import android.widget.*;
 
@@ -56,6 +55,25 @@ public class Test extends Activity {
 
         final Button button = (Button) findViewById(R.id.Button01);
         button.setOnClickListener(new ButtonListener());
+    }
+    
+    public boolean onCreateOptionsMenu(Menu menu) {
+    	MenuInflater inf = getMenuInflater();
+    	inf.inflate(R.menu.options_menu, menu);
+    	return true;
+    }
+    
+    public boolean onContextItemSelected(MenuItem item) {
+    	switch(item.getItemId()) {
+    		case R.id.close:
+    			closeProgram();
+    			return true;
+    		default: return super.onContextItemSelected(item);
+    	}
+    }
+    
+    private void closeProgram() {
+    	
     }
     
     private void updateDistance() {
@@ -148,7 +166,7 @@ public class Test extends Activity {
 		public void onSensorChanged(int sensor, float[] values) {
 			// TODO Auto-generated method stub
 			//										yaw					pitch				roll
-			Log.d("ORIENTATIOn", "sensorChanged (" + values[0] + ", " + values[1] + ", " + values[2] + ")");
+			Log.d(TAG, "sensorChanged (" + values[0] + ", " + values[1] + ", " + values[2] + ")");
 		}
     	
     }
