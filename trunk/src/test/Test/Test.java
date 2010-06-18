@@ -12,20 +12,13 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.animation.Animation;
-import android.view.animation.RotateAnimation;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
-import android.widget.Spinner;
-import android.widget.TableLayout;
-import android.widget.TextView;
+import android.widget.*;
 
 //distances: http://www.anddev.org/the_friend_finder_-_mapactivity_using_gps_-_part_i_-_ii-t93.html
 //compass and so on: http://developer.android.com/resources/samples/ApiDemos/src/com/example/android/apis/graphics/Compass.html
 @SuppressWarnings("deprecation")
 public class Test extends Activity {
-	private static final String TAG = "TEST";
+	private static final String TAG = "GeoCacheLocator";
 	private LocationManager lm;
 	private SensorManager sm;
 	private Location destination,myLocation;
@@ -101,7 +94,7 @@ public class Test extends Activity {
     private void rotateImage() {
 		ImageView img = (ImageView) findViewById(R.id.ImageArrow);
 		float to[] = getRotationTo(actDegree,destination);
-		Log.e(TAG, "rotating from: "+actDegree+"\tto:"+to);
+	//	Log.e(TAG, "rotating from: "+actDegree+"\tto:"+to[0]);
 		img.startAnimation(generateRotationAnimation(actDegree, (int) to[1], img.getWidth()/2.0f, img.getHeight()/2.0f));
 		actDegree=(int) to[0];
     }
