@@ -74,7 +74,7 @@ public class Rotate3dAnimation extends Animation {
         final Camera camera = mCamera;
 
         final Matrix matrix = t.getMatrix();
-
+       
         camera.save();
         if (mReverse) {
             camera.translate(0.0f, 0.0f, mDepthZ * interpolatedTime);
