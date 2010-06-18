@@ -21,20 +21,21 @@ public final class R {
         public static final int icon=0x7f020003;
     }
     public static final class id {
-        public static final int Button01=0x7f07000a;
+        public static final int Button01=0x7f07000b;
         public static final int ImageArrow=0x7f070006;
         public static final int RelativeLayout01=0x7f070005;
-        public static final int SpinnerEW=0x7f07000d;
-        public static final int SpinnerSN=0x7f07000b;
-        public static final int close=0x7f07000f;
+        public static final int SpinnerEW=0x7f07000e;
+        public static final int SpinnerSN=0x7f07000c;
+        public static final int close=0x7f070010;
         public static final int distance=0x7f070009;
         public static final int image_arrow_red=0x7f070007;
         public static final int image_arrow_yellow=0x7f070008;
-        public static final int inLatitude=0x7f07000c;
-        public static final int inLongitude=0x7f07000e;
+        public static final int inLatitude=0x7f07000d;
+        public static final int inLongitude=0x7f07000f;
         public static final int input_point=0x7f070001;
         public static final int latitude=0x7f070003;
         public static final int longitude=0x7f070004;
+        public static final int orientation=0x7f07000a;
         public static final int table_actposition=0x7f070002;
         public static final int table_arrow=0x7f070000;
     }
