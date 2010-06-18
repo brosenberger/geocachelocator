@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="wrap_content"
+    android:id="@+id/input_point"
+    android:stretchColumns="*">
+       
+	<TableRow>
+		<LinearLayout android:layout_span="2">
+	    <include android:id="@+id/table_actposition"
+			android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			layout="@layout/table_actposition">    
+		</include>  </LinearLayout>
+	</TableRow> 
+      
+    <TableRow>
+	    <View
+	        android:layout_span="2"
+	        android:layout_height="2dip"
+	        android:layout_width="fill_parent"
+	        android:background="#FF909090" />
+	</TableRow>
+	<TableRow>
+		<TextView
+			android:text="Target Position:">
+		</TextView>
+		<Button 
+       		android:id="@+id/Button01"
+       		android:layout_width="wrap_content"
+			android:layout_height="wrap_content" 
+			android:text="@string/Button01">
+		</Button>
+	</TableRow>
+
+	<TableRow>
+		<LinearLayout
+			android:layout_span="2">
+			<Spinner 
+				android:id="@+id/SpinnerSN" 
+				android:layout_width="wrap_content" 
+				android:layout_height="wrap_content">
+			</Spinner>
+			<EditText 
+				android:text="" 
+				android:layout_width="fill_parent" 
+				android:layout_height="wrap_content" 
+				android:id="@+id/inLatitude" 
+				android:inputType="numberDecimal">
+			</EditText>
+		</LinearLayout>
+	</TableRow>
+	<TableRow>
+		<LinearLayout
+			android:layout_span="2">
+			<Spinner
+				android:id="@+id/SpinnerEW"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content">
+			</Spinner>
+			<EditText 
+				android:text="" 
+				android:layout_width="fill_parent" 
+				android:id="@+id/inLongitude" 
+				android:layout_height="wrap_content"
+				android:inputType="numberDecimal">
+			</EditText>
+		</LinearLayout>
+	</TableRow>
+    
+</TableLayout>
