@@ -17,20 +17,25 @@ import android.view.View;
 import android.view.Window;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.LinearInterpolator;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Spinner;
-import android.widget.TableLayout;
 import android.widget.TextView;
 
 //distances: http://www.anddev.org/the_friend_finder_-_mapactivity_using_gps_-_part_i_-_ii-t93.html
 //compass and so on: http://developer.android.com/resources/samples/ApiDemos/src/com/example/android/apis/graphics/Compass.html
 public class Test extends Activity {
 	private static final String TAG = "GeoCacheLocator";
+	private static final int GREEN_ARROW = 0;
+	private static final int YELLOW_ARROW = 100;
+	private static final int RED_ARROW = 200;
+	private boolean[] visibleArrows={true,false};
+	private boolean[] lastVisibleArrows={true,false};
 	private LocationManager lm;
-	private Direction actDegree=new Direction(0);
 	private static float RED_BORDER=1000;
 	private static float YELLOW_BORDER=300;
 	private Locations locationService = new Locations();
@@ -43,7 +48,6 @@ public class Test extends Activity {
        
         lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationUpdateHandler());
-
         locationService.setMyLocation(lm.getLastKnownLocation("gps"));
                 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -64,11 +68,6 @@ public class Test extends Activity {
 
         final Button button = (Button) findViewById(R.id.Button01);
         button.setOnClickListener(new ButtonListener());
-        
-        Animation a = generateTransparencyAnimation(0, 100, 0);
-        ((ImageView) findViewById(R.id.ImageArrow)).startAnimation(a);
-        ((ImageView) findViewById(R.id.image_arrow_yellow)).startAnimation(a);
-        ((ImageView) findViewById(R.id.image_arrow_red)).startAnimation(a);
         
         Log.i(TAG, "GPS Locator loaded");
     }
@@ -98,37 +97,24 @@ public class Test extends Activity {
     //*****************************************************************************************    
     private void updateDistance() {
     	Distance distance = locationService.getDistanceToDestination();
-    	Distance oldDistance = locationService.getLastWalkingDistance();
     	TextView tv = (TextView) findViewById(R.id.distance);
-    	tv.setText(distance+" ("+(char)177+locationService.getMyLocation().getAccuracy()+"m)");
-    	//tv.setText(getDistance(actPos)+" ("+(char)177+actPos.getAccuracy()+"m)");
-    	updateArrowColor(oldDistance.getDistance(), distance.getDistance());
+    	tv.setText(distance+" ("+(char)177+locationService.getAccuracy()+")");
     }
-    private void updateArrowColor(float oldD, float newD) {
-    	Animation fadeOut = generateTransparencyAnimation(100, 100, 0);
-    	Animation fadeIn = generateTransparencyAnimation(100, 0, 100);
-    	ImageView out, in;
-    	if (oldD>RED_BORDER && newD>YELLOW_BORDER) { //-->red to yellow
-    		in = (ImageView) findViewById(R.id.image_arrow_yellow);
-    		out = (ImageView) findViewById(R.id.image_arrow_red);
-    	} else if (oldD>YELLOW_BORDER && oldD<=RED_BORDER && newD<=YELLOW_BORDER) { //-->yellow to green
-    		in = (ImageView) findViewById(R.id.ImageArrow);
-    		out = (ImageView) findViewById(R.id.image_arrow_yellow);
-    	} else if (oldD<=YELLOW_BORDER && newD>YELLOW_BORDER && newD<=RED_BORDER) { //-->green to yellow
-    		in = (ImageView) findViewById(R.id.image_arrow_yellow);
-    		out = (ImageView) findViewById(R.id.ImageArrow);
-    	} else if (oldD>RED_BORDER && newD<=YELLOW_BORDER) { //-->red to green
-    		in = (ImageView) findViewById(R.id.ImageArrow);
-    		out = (ImageView) findViewById(R.id.image_arrow_red);
-    	} else if (oldD<=YELLOW_BORDER && newD>RED_BORDER) { //-->green to red
-    		in = (ImageView) findViewById(R.id.image_arrow_red);
-    		out = (ImageView) findViewById(R.id.ImageArrow);
-    	} else { //-->yellow to red
-    		in = (ImageView) findViewById(R.id.image_arrow_red);
-    		out = (ImageView) findViewById(R.id.image_arrow_yellow);
+    private void updateArrowVisibility() {
+    	float newD = locationService.getDistanceToDestination().getDistance();
+    	lastVisibleArrows = visibleArrows;
+    	
+    	boolean first=false, sec=false;
+    	
+    	if (newD<=YELLOW_BORDER) { //--> new is green
+    		first=true;
+    	} else if (newD>YELLOW_BORDER && newD<=RED_BORDER) { //-->new is yellow
+    		sec=true;
     	}
-    	in.startAnimation(fadeIn);
-    	out.startAnimation(fadeOut);
+    	//else //--> new is red
+    		    	
+    	visibleArrows = new boolean[]{first,sec};
+    	//Log.e(TAG, "visibility from "+lastVisibleArrows[0]+":"+lastVisibleArrows[1]+" to "+visibleArrows[0]+":"+visibleArrows[1]);
     }
     private void updateActPos() {
     	Location myLocation = locationService.getMyLocation();
@@ -136,46 +122,81 @@ public class Test extends Activity {
 		tv.setText((myLocation.getLatitude()>0?"N":"S")+" "+myLocation.getLatitude()+"");
 		tv = (TextView) findViewById(R.id.longitude);
 		tv.setText((myLocation.getLongitude()>0?"E":"W")+" "+myLocation.getLongitude()+"");
-		TableLayout tl = (TableLayout) findViewById(R.id.table_actposition);
-		tl.requestLayout();
+//		TableLayout tl = (TableLayout) findViewById(R.id.table_actposition);
+//		tl.requestLayout();
     }
     private void updateDirection() {
     	TextView tv = (TextView) findViewById(R.id.orientation);
     	Direction compass = locationService.getWalkingDirection();
     	tv.setText("Direction:" +compass+" ("+Direction.getCompassDirection(compass)+")");
     }
+    private void updateAnimations() {
+    	((ImageView)findViewById(R.id.ImageArrow)).startAnimation(generateAnimationSet(Test.GREEN_ARROW));
+    	((ImageView)findViewById(R.id.image_arrow_yellow)).startAnimation(generateAnimationSet(Test.YELLOW_ARROW));
+    	((ImageView)findViewById(R.id.image_arrow_red)).startAnimation(generateAnimationSet(Test.RED_ARROW));    	
+    }
     private void updateAll() {
     	updateDistance();
     	updateDirection();
     	updateActPos();
-    	rotateImage();
+    	updateArrowVisibility();
+    	updateAnimations();
     }
 
     //*****************************************************************************************
     //***  Image Animations                                                                 ***
     //*****************************************************************************************        
-    private Animation generateRotationAnimation(long duration, int from, int to, float xOff, float yOff) {
-    	Rotate3dAnimation r = new Rotate3dAnimation(from, to, xOff, yOff, 0, false);
-    	r.setFillAfter(true);
-    	r.setDuration(duration);
-    	return r;
+
+    //@ TODO animations to animationset
+    private AnimationSet generateAnimationSet(int img) {
+    	AnimationSet a = new AnimationSet(false);
+    	a.addAnimation(generateRotationAnimation(img));
+    	a.addAnimation(generateTransparencyAnimation(img));
+    	a.setFillAfter(true);
+    	return a;
+    }
+    private Animation generateRotationAnimation(int img) {
+    	Animation rA=null;
+    	if (img == Test.GREEN_ARROW) {
+    		rA = generateRotationAnimationForImage((ImageView)findViewById(R.id.ImageArrow));  		
+    	} else if (img == Test.YELLOW_ARROW) {
+    		rA = generateRotationAnimationForImage((ImageView)findViewById(R.id.image_arrow_yellow));  		
+    	} else if (img == Test.RED_ARROW){
+    		rA = generateRotationAnimationForImage((ImageView)findViewById(R.id.image_arrow_red));  		    		
+    	}
+    	return rA;
+    }
+    private Animation generateRotationAnimationForImage(ImageView img) {
+    	long duration=1000;
+    	int from = (int) locationService.getLastDirectionToDestination().getDegree();
+    	int to = (int) locationService.getDirectionToDestination().getShortestRotationTo(locationService.getDirectionToDestination());
+    	float xOff = img.getWidth()/2.0f;
+    	float yOff = img.getHeight()/2.0f;
+    	Rotate3dAnimation a = new Rotate3dAnimation(from, to, xOff, yOff, 0, false);
+    	a.setFillAfter(true);
+    	a.setDuration(duration);
+		return a;
+    }
+    private Animation generateTransparencyAnimation(int img) {
+    	float from=0, to=0;
+    	if (img == Test.GREEN_ARROW) {
+    	  	if (visibleArrows[0]) to=1;
+    	  	if (lastVisibleArrows[0]) from=1;
+    	} else if (img == Test.YELLOW_ARROW) {
+    		if (visibleArrows[1]) to=1;
+    		if (lastVisibleArrows[1]) from=1;
+    	} else if (img == Test.RED_ARROW){
+    		if (!visibleArrows[0] && !visibleArrows[1]) to=1;
+    		if (!lastVisibleArrows[0] && !lastVisibleArrows[1]) from=1;
+    	}
+    	return generateTransparencyAnimation(1000, from, to);    	
     }
     private Animation generateTransparencyAnimation(long duration, float from, float to) {
     	AlphaAnimation a = new AlphaAnimation(from, to);
     	a.setFillAfter(true);
+    	a.setInterpolator(new LinearInterpolator());
     	a.setDuration(duration);
     	return a;
-    }
-    private void rotateImage() {
-		float to = locationService.getDirectionToDestination().getShortestRotationTo(actDegree);
-		startRotationAnimationForImage((ImageView) findViewById(R.id.ImageArrow), to);
-		startRotationAnimationForImage((ImageView) findViewById(R.id.image_arrow_yellow), to);
-		startRotationAnimationForImage((ImageView) findViewById(R.id.image_arrow_red), to);
-		actDegree= locationService.getDirectionToDestination();
-    }
-    private void startRotationAnimationForImage(ImageView img,float to) {
-		Animation a = generateRotationAnimation(1000,(int) actDegree.getDegree(), (int) to, img.getWidth()/2.0f, img.getHeight()/2.0f);
-		img.startAnimation(a); 
     }
 
     //*****************************************************************************************
