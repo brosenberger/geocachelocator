@@ -102,19 +102,16 @@ public class Test extends Activity {
     }
     private void updateArrowVisibility() {
     	float newD = locationService.getDistanceToDestination().getDistance();
-    	lastVisibleArrows = visibleArrows;
-    	
     	boolean first=false, sec=false;
-    	
+
+    	lastVisibleArrows = visibleArrows;
     	if (newD<=YELLOW_BORDER) { //--> new is green
     		first=true;
     	} else if (newD>YELLOW_BORDER && newD<=RED_BORDER) { //-->new is yellow
     		sec=true;
     	}
-    	//else //--> new is red
-    		    	
+    	//else not needed due to standard settings --> new is red
     	visibleArrows = new boolean[]{first,sec};
-    	//Log.e(TAG, "visibility from "+lastVisibleArrows[0]+":"+lastVisibleArrows[1]+" to "+visibleArrows[0]+":"+visibleArrows[1]);
     }
     private void updateActPos() {
     	Location myLocation = locationService.getMyLocation();
@@ -122,8 +119,6 @@ public class Test extends Activity {
 		tv.setText((myLocation.getLatitude()>0?"N":"S")+" "+myLocation.getLatitude()+"");
 		tv = (TextView) findViewById(R.id.longitude);
 		tv.setText((myLocation.getLongitude()>0?"E":"W")+" "+myLocation.getLongitude()+"");
-//		TableLayout tl = (TableLayout) findViewById(R.id.table_actposition);
-//		tl.requestLayout();
     }
     private void updateDirection() {
     	TextView tv = (TextView) findViewById(R.id.orientation);
@@ -147,7 +142,6 @@ public class Test extends Activity {
     //***  Image Animations                                                                 ***
     //*****************************************************************************************        
 
-    //@ TODO animations to animationset
     private AnimationSet generateAnimationSet(int img) {
     	AnimationSet a = new AnimationSet(false);
     	a.addAnimation(generateRotationAnimation(img));

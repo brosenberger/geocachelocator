@@ -1,5 +1,10 @@
 package test.Test.util;
 
+/**
+ * Distance saves a float distance and formated printing
+ * @author Benjamin Rosenberger
+ *
+ */
 public class Distance {
 	private float distance;
 	
@@ -10,7 +15,9 @@ public class Distance {
 	public float getDistance() {
 		return distance;
 	}
-	
+	/**
+	 * differing between m and km
+	 */
 	public String toString() {
 		float d=distance;
 		if (d/1000>0.8) {
