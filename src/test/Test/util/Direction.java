@@ -1,5 +1,10 @@
 package test.Test.util;
 
+/**
+ * Direction stores an float angle between points
+ * @author Benjamin Rosenberger
+ *
+ */
 public class Direction {
 	private float degree;
 	
