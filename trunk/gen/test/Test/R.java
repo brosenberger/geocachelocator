@@ -44,7 +44,6 @@ public final class R {
         public static final int table_actposition=0x7f030001;
         public static final int table_arrow=0x7f030002;
         public static final int table_inputs=0x7f030003;
-        public static final int testlayout=0x7f030004;
     }
     public static final class menu {
         public static final int options_menu=0x7f060000;
