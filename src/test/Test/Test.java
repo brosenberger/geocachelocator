@@ -1,5 +1,8 @@
 package test.Test;
 
+import test.Test.util.Direction;
+import test.Test.util.Distance;
+import test.Test.util.Locations;
 import android.app.Activity;
 import android.content.Context;
 import android.location.Location;
@@ -7,23 +10,30 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.*;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.Window;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
-import android.widget.*;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TableLayout;
+import android.widget.TextView;
 
 //distances: http://www.anddev.org/the_friend_finder_-_mapactivity_using_gps_-_part_i_-_ii-t93.html
 //compass and so on: http://developer.android.com/resources/samples/ApiDemos/src/com/example/android/apis/graphics/Compass.html
 public class Test extends Activity {
 	private static final String TAG = "GeoCacheLocator";
 	private LocationManager lm;
-	private Location destination,myLocation,lastPosition;
-	private Distance distance;
-	private int actDegree=0;
-	private float correction=0;
+	private Direction actDegree=new Direction(0);
 	private static float RED_BORDER=1000;
 	private static float YELLOW_BORDER=300;
-	protected ArrayAdapter<CharSequence> mAdapter;
+	private Locations locationService = new Locations();
 	
     /** Called when the activity is first created. */
     @SuppressWarnings("unchecked")
@@ -33,7 +43,8 @@ public class Test extends Activity {
        
         lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, new LocationUpdateHandler());
-        setMyLocation(lm.getLastKnownLocation("gps"));
+
+        locationService.setMyLocation(lm.getLastKnownLocation("gps"));
                 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.main);
@@ -58,14 +69,18 @@ public class Test extends Activity {
         ((ImageView) findViewById(R.id.ImageArrow)).startAnimation(a);
         ((ImageView) findViewById(R.id.image_arrow_yellow)).startAnimation(a);
         ((ImageView) findViewById(R.id.image_arrow_red)).startAnimation(a);
+        
+        Log.i(TAG, "GPS Locator loaded");
     }
     
+    //*****************************************************************************************
+    //***  Menu                                                                             ***
+    //*****************************************************************************************    
     public boolean onCreateOptionsMenu(Menu menu) {
     	MenuInflater inf = getMenuInflater();
     	inf.inflate(R.menu.options_menu, menu);
     	return true;
     }
-    
     public boolean onContextItemSelected(MenuItem item) {
     	switch(item.getItemId()) {
     		case R.id.close:
@@ -73,18 +88,21 @@ public class Test extends Activity {
     			return true;
     		default: return super.onContextItemSelected(item);
     	}
-    }
-    
+    }   
     private void closeProgram() {
     	
     }
-    
+
+    //*****************************************************************************************
+    //***  Updates                                                                          ***
+    //*****************************************************************************************    
     private void updateDistance() {
-    	Location actPos = myLocation==null?destination:myLocation;
-    	float oldD = distance==null?0:distance.getDistance();
+    	Distance distance = locationService.getDistanceToDestination();
+    	Distance oldDistance = locationService.getLastWalkingDistance();
     	TextView tv = (TextView) findViewById(R.id.distance);
-    	tv.setText(getDistance(actPos)+" ("+(char)177+actPos.getAccuracy()+"m)");
-    	updateArrowColor(oldD, distance.getDistance());
+    	tv.setText(distance+" ("+(char)177+locationService.getMyLocation().getAccuracy()+"m)");
+    	//tv.setText(getDistance(actPos)+" ("+(char)177+actPos.getAccuracy()+"m)");
+    	updateArrowColor(oldDistance.getDistance(), distance.getDistance());
     }
     private void updateArrowColor(float oldD, float newD) {
     	Animation fadeOut = generateTransparencyAnimation(100, 100, 0);
@@ -113,6 +131,7 @@ public class Test extends Activity {
     	out.startAnimation(fadeOut);
     }
     private void updateActPos() {
+    	Location myLocation = locationService.getMyLocation();
 		TextView tv = (TextView) findViewById(R.id.latitude);
 		tv.setText((myLocation.getLatitude()>0?"N":"S")+" "+myLocation.getLatitude()+"");
 		tv = (TextView) findViewById(R.id.longitude);
@@ -120,20 +139,21 @@ public class Test extends Activity {
 		TableLayout tl = (TableLayout) findViewById(R.id.table_actposition);
 		tl.requestLayout();
     }
-    private String getDistance(Location actPos) {
-    	return (distance=new Distance(actPos.distanceTo(destination))).toString();
+    private void updateDirection() {
+    	TextView tv = (TextView) findViewById(R.id.orientation);
+    	Direction compass = locationService.getWalkingDirection();
+    	tv.setText("Direction:" +compass+" ("+Direction.getCompassDirection(compass)+")");
     }
-    private float[] getRotationTo(int actDegree, Location source, Location destination) {
-    	float to = source.bearingTo(destination);
-    	float toRotate;
-    	if (to>0) to -= 360;
-    	toRotate = to = (to*-1)+correction;
-    	if (Math.abs(actDegree-to)>180) {
-    		toRotate-=360;
-    	}
-    	float[] ret = {to,toRotate};
-    	return ret;
+    private void updateAll() {
+    	updateDistance();
+    	updateDirection();
+    	updateActPos();
+    	rotateImage();
     }
+
+    //*****************************************************************************************
+    //***  Image Animations                                                                 ***
+    //*****************************************************************************************        
     private Animation generateRotationAnimation(long duration, int from, int to, float xOff, float yOff) {
     	Rotate3dAnimation r = new Rotate3dAnimation(from, to, xOff, yOff, 0, false);
     	r.setFillAfter(true);
@@ -147,48 +167,21 @@ public class Test extends Activity {
     	return a;
     }
     private void rotateImage() {
-		float to[] = getRotationTo(actDegree,myLocation,destination);
-	//	Log.e(TAG, "rotating from: "+actDegree+"\tto:"+to[0]);
-		startRotationAnimationForImage((ImageView) findViewById(R.id.ImageArrow), to[1]);
-		startRotationAnimationForImage((ImageView) findViewById(R.id.image_arrow_yellow), to[1]);
-		startRotationAnimationForImage((ImageView) findViewById(R.id.image_arrow_red), to[1]);
-		actDegree=(int) to[0];
+		float to = locationService.getDirectionToDestination().getShortestRotationTo(actDegree);
+		startRotationAnimationForImage((ImageView) findViewById(R.id.ImageArrow), to);
+		startRotationAnimationForImage((ImageView) findViewById(R.id.image_arrow_yellow), to);
+		startRotationAnimationForImage((ImageView) findViewById(R.id.image_arrow_red), to);
+		actDegree= locationService.getDirectionToDestination();
     }
     private void startRotationAnimationForImage(ImageView img,float to) {
-		Animation a = generateRotationAnimation(1000,actDegree, (int) to, img.getWidth()/2.0f, img.getHeight()/2.0f);
+		Animation a = generateRotationAnimation(1000,(int) actDegree.getDegree(), (int) to, img.getWidth()/2.0f, img.getHeight()/2.0f);
 		img.startAnimation(a); 
     }
-    private void setDestination(Location destination) {
-    	this.destination = new Location(destination);
-   	//	Log.i(TAG, "destination changed to: "+destination.toString());
-    }
-    private void setMyLocation(Location myLocation) {
-    	this.myLocation = myLocation;
-    	if (myLocation!=null){ 
-    //		Log.i(TAG, "my location changed to: "+myLocation.toString());
-    	}
-    }
-    private void setLastPosition(Location lastPosition) {
-    	this.lastPosition = lastPosition;
-    	setDegreeCorrection(getRotationTo(actDegree, lastPosition, myLocation)[0]);
-    	TextView tv = (TextView) findViewById(R.id.orientation);
-    	tv.setText("Direction:" +this.correction+"° ("+getCompassDirection(this.correction)+")");
-    }
-    private String getCompassDirection(float val) {
-    	if (val>=22.5 && val<67.5) return "NO";
-    	if (val>=67.5 && val<112.5) return "O";
-    	if (val>=112.5 && val<157.5) return "SO";
-    	if (val>=157.5 && val<202.5) return "S";
-    	if (val>=202.5 && val<247.5) return "SW";
-    	if (val>=247.5 && val<292.5) return "W";
-    	if (val>=292.5 && val<337.5) return "NW";
-    	return "N";
-    }
-    private void setDegreeCorrection(float correction) {
-    	Log.d(TAG, "direction: "+correction);
-    	this.correction = correction;
-    }
-    private void getNewDestination() {
+
+    //*****************************************************************************************
+    //***  Setters & Getters                                                                ***
+    //*****************************************************************************************    
+    private void getNewDestinationFromForm() {
 		Location dest = new Location("gps");
 		float longitude, latitude;
 		try {
@@ -200,22 +193,17 @@ public class Test extends Activity {
 			if (spinnerEW.getSelectedItem().toString().equalsIgnoreCase("W")) longitude *= -1;
 			dest.setLatitude(latitude);
 			dest.setLongitude(longitude);
-			setDestination(dest);
+			locationService.setDestination(dest);
 			updateAll();
 		} catch (Exception e) {}
     }
-    
-    private void updateAll() {
-    	updateDistance();
-    	updateActPos();
-    	rotateImage();
-    }
-        
+
+    //*****************************************************************************************
+    //***  Listener                                                                         ***
+    //*****************************************************************************************    
     private class LocationUpdateHandler implements LocationListener {
 		public void onLocationChanged(Location location) {
-			if (destination==null) setDestination(location);
-			if (lastPosition==null) setLastPosition(location);
-			setMyLocation(location);
+			locationService.setMyLocation(location);
 			updateAll();
 		}
 
@@ -225,7 +213,7 @@ public class Test extends Activity {
     } 
     private class ButtonListener implements View.OnClickListener {
 		public void onClick(View v) {
-			getNewDestination();
+			getNewDestinationFromForm();
 		}    
 	}
 }
