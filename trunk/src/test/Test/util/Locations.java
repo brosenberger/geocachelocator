@@ -13,9 +13,14 @@ import android.location.Location;
  */
 public class Locations {
 	private static float minDistance=1;
+	private static Locations instance = new Locations();
 	private Location destination=null;
 	private LinkedList<Location> locations = new LinkedList<Location>();
 
+	public static Locations getInstance() {
+		return instance;
+	}
+	
     //*****************************************************************************************
     //***  Getters & Setters                                                                ***
     //*****************************************************************************************    
@@ -55,7 +60,7 @@ public class Locations {
 	private Location getWalkingFrom() {
 		try {
 			return locations.get(1);
-		} catch (NoSuchElementException e) {
+		} catch (Exception e) {
 			return new Location("gps");
 		}
 	}
