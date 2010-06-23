@@ -15,10 +15,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.LinearInterpolator;
+import android.view.animation.*;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -33,12 +30,13 @@ public class Test extends Activity {
 	private static final int GREEN_ARROW = 0;
 	private static final int YELLOW_ARROW = 100;
 	private static final int RED_ARROW = 200;
-	private boolean[] visibleArrows={true,false};
-	private boolean[] lastVisibleArrows={true,false};
+	private static final int FLAG = 300;
+	private boolean[] visibleArrows={false,false,false};
+	private boolean[] lastVisibleArrows={false,false,false};
 	private LocationManager lm;
 	private static float RED_BORDER=1000;
 	private static float YELLOW_BORDER=300;
-	private Locations locationService = new Locations();
+	private Locations locationService = Locations.getInstance();
 	
     /** Called when the activity is first created. */
     @SuppressWarnings("unchecked")
@@ -68,6 +66,8 @@ public class Test extends Activity {
 
         final Button button = (Button) findViewById(R.id.Button01);
         button.setOnClickListener(new ButtonListener());
+        
+        updateAnimations();
         
         Log.i(TAG, "GPS Locator loaded");
     }
@@ -102,16 +102,18 @@ public class Test extends Activity {
     }
     private void updateArrowVisibility() {
     	float newD = locationService.getDistanceToDestination().getDistance();
-    	boolean first=false, sec=false;
+    	boolean first=false, sec=false, third=false;
 
     	lastVisibleArrows = visibleArrows;
-    	if (newD<=YELLOW_BORDER) { //--> new is green
+    	if (newD<=YELLOW_BORDER && (newD>locationService.getAccuracy().getDistance()||newD>1)) { //--> new is green
     		first=true;
     	} else if (newD>YELLOW_BORDER && newD<=RED_BORDER) { //-->new is yellow
     		sec=true;
+    	} else if (newD>RED_BORDER) {
+    		third=true;
     	}
-    	//else not needed due to standard settings --> new is red
-    	visibleArrows = new boolean[]{first,sec};
+    	//else not needed due to standard settings --> new is flag
+    	visibleArrows = new boolean[]{first,sec,third};
     }
     private void updateActPos() {
     	Location myLocation = locationService.getMyLocation();
@@ -126,9 +128,10 @@ public class Test extends Activity {
     	tv.setText("Direction:" +compass+" ("+Direction.getCompassDirection(compass)+")");
     }
     private void updateAnimations() {
-    	((ImageView)findViewById(R.id.ImageArrow)).startAnimation(generateAnimationSet(Test.GREEN_ARROW));
+    	((ImageView)findViewById(R.id.image_arrow_green)).startAnimation(generateAnimationSet(Test.GREEN_ARROW));
     	((ImageView)findViewById(R.id.image_arrow_yellow)).startAnimation(generateAnimationSet(Test.YELLOW_ARROW));
-    	((ImageView)findViewById(R.id.image_arrow_red)).startAnimation(generateAnimationSet(Test.RED_ARROW));    	
+    	((ImageView)findViewById(R.id.image_arrow_red)).startAnimation(generateAnimationSet(Test.RED_ARROW));   
+    	((ImageView)findViewById(R.id.image_flag)).startAnimation(generateAnimationSet(Test.FLAG));
     }
     private void updateAll() {
     	updateDistance();
@@ -152,11 +155,13 @@ public class Test extends Activity {
     private Animation generateRotationAnimation(int img) {
     	Animation rA=null;
     	if (img == Test.GREEN_ARROW) {
-    		rA = generateRotationAnimationForImage((ImageView)findViewById(R.id.ImageArrow));  		
+    		rA = generateRotationAnimationForImage((ImageView)findViewById(R.id.image_arrow_green));  		
     	} else if (img == Test.YELLOW_ARROW) {
     		rA = generateRotationAnimationForImage((ImageView)findViewById(R.id.image_arrow_yellow));  		
     	} else if (img == Test.RED_ARROW){
     		rA = generateRotationAnimationForImage((ImageView)findViewById(R.id.image_arrow_red));  		    		
+    	} else if (img == Test.FLAG) {
+    		rA = generateScalationAnimation((ImageView)findViewById(R.id.image_flag));
     	}
     	return rA;
     }
@@ -171,6 +176,13 @@ public class Test extends Activity {
     	a.setDuration(duration);
 		return a;
     }
+    private Animation generateScalationAnimation(ImageView img) {
+    	ScaleAnimation sA = new ScaleAnimation(img.getWidth(),(float) (img.getWidth()*0.75), img.getHeight(), (float)(img.getHeight()*0.75));
+    	sA.setRepeatMode(Animation.REVERSE);
+    	sA.setRepeatCount(Animation.INFINITE);
+    	sA.setFillAfter(true);
+    	return sA;
+    }
     private Animation generateTransparencyAnimation(int img) {
     	float from=0, to=0;
     	if (img == Test.GREEN_ARROW) {
@@ -180,8 +192,11 @@ public class Test extends Activity {
     		if (visibleArrows[1]) to=1;
     		if (lastVisibleArrows[1]) from=1;
     	} else if (img == Test.RED_ARROW){
-    		if (!visibleArrows[0] && !visibleArrows[1]) to=1;
-    		if (!lastVisibleArrows[0] && !lastVisibleArrows[1]) from=1;
+    		if (visibleArrows[2]) to=1;
+    		if (lastVisibleArrows[2]) from=1;
+    	} else if (img == Test.FLAG) {
+    		if (!visibleArrows[0] && !visibleArrows[1] && !visibleArrows[2]) to=1;
+    		if (!lastVisibleArrows[0] && !lastVisibleArrows[1] && !lastVisibleArrows[2]) from=1;
     	}
     	return generateTransparencyAnimation(1000, from, to);    	
     }
