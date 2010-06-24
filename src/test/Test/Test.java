@@ -67,7 +67,14 @@ public class Test extends Activity {
         final Button button = (Button) findViewById(R.id.Button01);
         button.setOnClickListener(new ButtonListener());
         
-        updateAnimations();
+        /*updateAnimations();
+        updateForms();
+        */
+        
+        //testDirections();
+        
+        updateAll();
+        updateForms();
         
         Log.i(TAG, "GPS Locator loaded");
     }
@@ -125,7 +132,7 @@ public class Test extends Activity {
     private void updateDirection() {
     	TextView tv = (TextView) findViewById(R.id.orientation);
     	Direction compass = locationService.getWalkingDirection();
-    	tv.setText("Direction:" +compass+" ("+Direction.getCompassDirection(compass)+")");
+    	tv.setText("Direction: " +compass+" ("+Direction.getCompassDirection(compass)+")");
     }
     private void updateAnimations() {
     	((ImageView)findViewById(R.id.image_arrow_green)).startAnimation(generateAnimationSet(Test.GREEN_ARROW));
@@ -140,7 +147,13 @@ public class Test extends Activity {
     	updateArrowVisibility();
     	updateAnimations();
     }
-
+    private void updateForms() {
+    	Location destination = locationService.getDestination();
+    	((EditText)findViewById(R.id.inLatitude)).setText(Math.abs(destination.getLatitude())+"");
+    	((EditText)findViewById(R.id.inLongitude)).setText(Math.abs(destination.getLongitude())+"");
+    	((Spinner)findViewById(R.id.SpinnerSN)).setSelection(destination.getLatitude()<0?1:0);
+    	((Spinner)findViewById(R.id.SpinnerEW)).setSelection(destination.getLongitude()<0?1:0);
+    }
     //*****************************************************************************************
     //***  Image Animations                                                                 ***
     //*****************************************************************************************        
@@ -177,9 +190,10 @@ public class Test extends Activity {
 		return a;
     }
     private Animation generateScalationAnimation(ImageView img) {
-    	ScaleAnimation sA = new ScaleAnimation(img.getWidth(),(float) (img.getWidth()*0.75), img.getHeight(), (float)(img.getHeight()*0.75));
+    	ScaleAnimation sA = new ScaleAnimation(1,0.75f,1,0.75f,Animation.RELATIVE_TO_SELF,0.5f, Animation.RELATIVE_TO_SELF,0.5f);
     	sA.setRepeatMode(Animation.REVERSE);
     	sA.setRepeatCount(Animation.INFINITE);
+    	sA.setDuration(3000);
     	sA.setFillAfter(true);
     	return sA;
     }
@@ -246,4 +260,45 @@ public class Test extends Activity {
 			getNewDestinationFromForm();
 		}    
 	}
+    
+    private Location generateLocation(double lat, double lon) {
+    	Location l = new Location("gps");
+    	l.setLatitude(lat);
+    	l.setLongitude(lon);
+    	return l;
+    }
+    private void testDirections() {
+    	testNorth();
+    	testSouth();
+    	testWest();
+    	testEast();
+    }
+    private void testNorth() {
+    	Locations l = new Locations();
+    	l.setMyLocation(generateLocation(48, 14));
+    	l.setMyLocation(generateLocation(49, 14));
+    	Direction d = l.getWalkingDirection();
+    	Log.d(TAG, "Direction north: "+d.getOriginalDegree());    	
+    }
+    private void testSouth() {
+    	Locations l = new Locations();
+    	l.setMyLocation(generateLocation(49, 14));
+    	l.setMyLocation(generateLocation(48, 14));
+    	Direction d = l.getWalkingDirection();
+    	Log.d(TAG, "Direction south: "+d.getOriginalDegree());
+    }
+    private void testWest() {
+    	Locations l = new Locations();
+    	l.setMyLocation(generateLocation(48, 14));
+    	l.setMyLocation(generateLocation(48, 13));
+    	Direction d = l.getWalkingDirection();
+    	Log.d(TAG, "Direction west: "+d.getOriginalDegree());
+    }
+    private void testEast() {
+    	Locations l = new Locations();
+    	l.setMyLocation(generateLocation(48, 13));
+    	l.setMyLocation(generateLocation(48, 14));
+    	Direction d = l.getWalkingDirection();
+    	Log.d(TAG, "Direction east: "+d.getOriginalDegree());
+    }
 }
