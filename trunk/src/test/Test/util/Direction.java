@@ -7,8 +7,11 @@ package test.Test.util;
  */
 public class Direction {
 	private float degree;
+	private float originalDegree;
+	private static float sectorSize=22.5f;
 	
 	public Direction(float degree) {
+		originalDegree = degree;
 		this.degree = changeToPositivRotation(degree);
 	}
 	
@@ -31,11 +34,14 @@ public class Direction {
 	public float getDegree() {
 		return this.degree;
 	}
+	public float getOriginalDegree() {
+		return this.originalDegree;
+	}
 	
 	public static String getCompassDirection(Direction degree) {
-		return getCompassDirection(degree.getDegree());
+		return getCompassDirectionOld(degree.getDegree());
 	}
-	public static String getCompassDirection(float degree) {
+	public static String getCompassDirectionOld(float degree) {
     	if (degree>=22.5 && degree<67.5) return "NO";
     	if (degree>=67.5 && degree<112.5) return "O";
     	if (degree>=112.5 && degree<157.5) return "SO";
@@ -45,8 +51,18 @@ public class Direction {
     	if (degree>=292.5 && degree<337.5) return "NW";
     	return "N";
     }
+	public static String getCompassDirection(float degree) {
+    	if (degree>=1*sectorSize && degree<2*sectorSize) return "NO";
+    	if (degree>=2*sectorSize && degree<3*sectorSize) return "O";
+    	if (degree>=3*sectorSize && degree<4*sectorSize) return "SO";
+    	if (degree>=-4*sectorSize && degree<-3*sectorSize) return "SW";
+    	if (degree>=-3*sectorSize && degree<-2*sectorSize) return "W";
+    	if (degree>=-2*sectorSize && degree<-1*sectorSize) return "NW";
+    	if (degree>=-1*sectorSize && degree<sectorSize) return "N";
+    	return "S";
+    }
 	
 	public String toString() {
-		return this.degree+"°";
+		return String.format("%.2f°", this.degree);
 	}
 }
