@@ -52,12 +52,12 @@ public class Direction {
     	return "N";
     }
 	public static String getCompassDirection(float degree) {
-    	if (degree>=1*sectorSize && degree<2*sectorSize) return "NO";
-    	if (degree>=2*sectorSize && degree<3*sectorSize) return "O";
-    	if (degree>=3*sectorSize && degree<4*sectorSize) return "SO";
-    	if (degree>=-4*sectorSize && degree<-3*sectorSize) return "SW";
-    	if (degree>=-3*sectorSize && degree<-2*sectorSize) return "W";
-    	if (degree>=-2*sectorSize && degree<-1*sectorSize) return "NW";
+    	if (degree>=1*sectorSize && degree<2*sectorSize) return "NW";
+    	if (degree>=2*sectorSize && degree<3*sectorSize) return "W";
+    	if (degree>=3*sectorSize && degree<4*sectorSize) return "SW";
+    	if (degree>=-4*sectorSize && degree<-3*sectorSize) return "SO";
+    	if (degree>=-3*sectorSize && degree<-2*sectorSize) return "O";
+    	if (degree>=-2*sectorSize && degree<-1*sectorSize) return "NO";
     	if (degree>=-1*sectorSize && degree<sectorSize) return "N";
     	return "S";
     }
