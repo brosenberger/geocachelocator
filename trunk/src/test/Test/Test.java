@@ -247,8 +247,21 @@ public class Test extends Activity {
     //*****************************************************************************************    
     private class LocationUpdateHandler implements LocationListener {
 		public void onLocationChanged(Location location) {
-			locationService.setMyLocation(location);
+			locationService.setMyLocation(roundToComma(location,6));
 			updateAll();
+		}
+		
+		private Location roundToComma(Location l, int comma) {
+			l.setLatitude(roundDouble(l.getLatitude(),comma));
+			l.setLongitude(roundDouble(l.getLongitude(),comma));
+			return l;
+		}
+		
+		private double roundDouble(double d, int c) {
+			double f = Math.pow(10, c);
+			d*=f;
+			d=Math.round(d)/f;
+			return d;
 		}
 
 		public void onProviderDisabled(String provider) {}
